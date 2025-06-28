@@ -44,7 +44,7 @@
 </head>
 <body class="text-slate-800 flex items-center justify-center min-h-screen p-4">
 
-    <div id="main-container" class="max-w-4xl w-full mx-auto">
+    <div id="main-container" class="max-w-6xl w-full mx-auto">
 
         <!-- Screen 1: Welcome -->
         <div id="welcome-screen" class="screen text-center space-y-8">
@@ -111,11 +111,11 @@
              <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg">
                 <h2 class="text-3xl font-bold mb-4">Your Personalized Lesson</h2>
                 <div id="lesson-content-container" class="prose max-w-none"></div>
-                 <div class="mt-8 flex flex-wrap gap-4">
+                <div class="mt-8 flex flex-wrap gap-4">
                     <button id="start-lesson-quiz-btn" class="flex-grow bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-green-700">Test Your Knowledge</button>
                     <button id="eli5-btn" class="flex-grow bg-sky-500 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-sky-600">✨ Explain Like I'm 5</button>
                     <button id="restore-lesson-btn" class="flex-grow bg-slate-500 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-slate-600 hidden">🔄 Restore Original Lesson</button>
-                 </div>
+                </div>
             </div>
         </div>
         
@@ -123,8 +123,11 @@
         <div id="lesson-quiz-screen" class="screen hidden">
             <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg">
                 <h2 class="text-3xl font-bold mb-6">Check Your Understanding</h2>
+                <!-- The form to hold all quiz questions -->
                 <form id="lesson-quiz-form" class="space-y-6"></form>
-                 <button id="submit-lesson-quiz-btn" class="mt-8 w-full bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-indigo-700">Submit Answers</button>
+                <div class="mt-8 text-center">
+                    <button id="submit-lesson-quiz-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-indigo-700">Submit Answers</button>
+                </div>
             </div>
         </div>
 
@@ -135,7 +138,7 @@
                 <p class="text-lg mt-4">Your score is:</p>
                 <p id="final-score-text" class="text-5xl font-bold text-indigo-600 my-4"></p>
                 <div id="feedback-section" class="mt-6 text-left">
-                    <button id="get-feedback-btn" class="w-full bg-teal-500 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-teal-600">✨ Get Feedback on Incorrect Answers</button>
+                    <button id="get-feedback-btn" class="w-full bg-teal-500 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-teal-600 hidden">✨ Get Feedback on Incorrect Answers</button>
                     <div id="feedback-container" class="mt-4 p-4 bg-slate-50 rounded-lg"></div>
                 </div>
                 <button id="start-over-btn" class="mt-8 w-full bg-slate-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-slate-600">Start Over</button>
@@ -147,29 +150,64 @@
         // --- DOM Elements ---
         const mainContainer = document.getElementById('main-container');
         const screens = { welcome: document.getElementById('welcome-screen'), quiz: document.getElementById('quiz-screen'), result: document.getElementById('result-screen'), subject: document.getElementById('subject-screen'), topic: document.getElementById('topic-screen'), loading: document.getElementById('loading-screen'), lesson: document.getElementById('lesson-screen'), lessonQuiz: document.getElementById('lesson-quiz-screen'), score: document.getElementById('score-screen'), };
-        const buttons = { startQuiz: document.getElementById('start-quiz-btn'), proceedToSubjects: document.getElementById('proceed-to-subjects-btn'), suggestTopics: document.getElementById('suggest-topics-btn'), generateLesson: document.getElementById('generate-lesson-btn'), startLessonQuiz: document.getElementById('start-lesson-quiz-btn'), eli5: document.getElementById('eli5-btn'), restoreLesson: document.getElementById('restore-lesson-btn'), submitLessonQuiz: document.getElementById('submit-lesson-quiz-btn'), getFeedback: document.getElementById('get-feedback-btn'), startOver: document.getElementById('start-over-btn'),};
+        const buttons = { 
+            startQuiz: document.getElementById('start-quiz-btn'), 
+            proceedToSubjects: document.getElementById('proceed-to-subjects-btn'), 
+            suggestTopics: document.getElementById('suggest-topics-btn'), 
+            generateLesson: document.getElementById('generate-lesson-btn'), 
+            startLessonQuiz: document.getElementById('start-lesson-quiz-btn'), 
+            eli5: document.getElementById('eli5-btn'), 
+            restoreLesson: document.getElementById('restore-lesson-btn'), 
+            submitLessonQuiz: document.getElementById('submit-lesson-quiz-btn'), 
+            getFeedback: document.getElementById('get-feedback-btn'), 
+            startOver: document.getElementById('start-over-btn'), 
+        };
         const quizContainer = { questionText: document.getElementById('question-text'), optionsContainer: document.getElementById('options-container'), questionCounter: document.getElementById('question-counter'), progressBar: document.getElementById('progress-bar') };
         const resultElements = { styleResult: document.getElementById('learning-style-result'), styleDescription: document.getElementById('learning-style-description'), };
         const subjectElements = { grid: document.getElementById('subject-grid'), styleInPrompt: document.getElementById('style-in-prompt'), }
         const topicElements = { input: document.getElementById('topic-input'), finalStyle: document.getElementById('topic-final-style'), finalSubject: document.getElementById('topic-final-subject'), suggestionsContainer: document.getElementById('topic-suggestions-container'), };
         const loadingText = document.getElementById('loading-text');
         const lessonContentContainer = document.getElementById('lesson-content-container');
-        const lessonQuizForm = document.getElementById('lesson-quiz-form');
+        const lessonQuizForm = document.getElementById('lesson-quiz-form'); 
         const finalScoreText = document.getElementById('final-score-text');
         const feedbackContainer = document.getElementById('feedback-container');
+        
 
         // --- Data & State ---
-        const quizQuestions = [ { question: "When I'm learning something new, I prefer to:", options: [{ text: "Watch a video or see a demonstration.", style: "Visual" }, { text: "Listen to someone explain it.", style: "Auditory" }, { text: "Read about it and take notes.", style: "Reading/Writing" }, { text: "Try it out myself, hands-on.", style: "Kinesthetic" }] }, { question: "When I see a word I don't know, I'm most likely to:", options: [{ text: "Remember how it looked on the page.", style: "Visual" }, { text: "Sound it out in my head.", style: "Auditory" }, { text: "Look it up and write down the definition.", style: "Reading/Writing" }, { text: "Use it in a sentence to understand it.", style: "Kinesthetic" }] }, { question: "When assembling something, I'm most likely to:", options: [{ text: "Look at the diagrams and pictures first.", style: "Visual" }, { text: "Have someone read the instructions to me.", style: "Auditory" }, { text: "Read all the written instructions carefully.", style: "Reading/Writing" }, { text: "Just start putting the pieces together.", style: "Kinesthetic" }] }, { question: "What do you do when you are listening to a presentation?", options: [{ text: "Focus on the visuals like charts and graphs.", style: "Visual" }, { text: "Listen intently to the speaker's tone and words.", style: "Auditory" }, { text: "Take detailed notes.", style: "Reading/Writing" }, { text: "Fidget or move around to stay focused.", style: "Kinesthetic" }] } ];
+        // Reduced to 5 questions for learning style quiz
+        const learningStyleQuizQuestions = [ 
+            { question: "When I'm learning something new, I prefer to:", options: [{ text: "Watch a video or see a demonstration.", style: "Visual" }, { text: "Listen to someone explain it.", style: "Auditory" }, { text: "Read about it and take notes.", style: "Reading/Writing" }, { text: "Try it out myself, hands-on.", style: "Kinesthetic" }] }, 
+            { question: "When I see a word I don't know, I'm most likely to:", options: [{ text: "Remember how it looked on the page.", style: "Visual" }, { text: "Sound it out in my head.", style: "Auditory" }, { text: "Look it up and write down the definition.", style: "Reading/Writing" }, { text: "Use it in a sentence to understand it.", style: "Kinesthetic" }] }, 
+            { question: "When assembling something, I'm most likely to:", options: [{ text: "Look at the diagrams and pictures first.", style: "Visual" }, { text: "Have someone read the instructions to me.", style: "Auditory" }, { text: "Read all the written instructions carefully.", style: "Reading/Writing" }, { text: "Just start putting the pieces together.", style: "Kinesthetic" }] }, 
+            { question: "What do you do when you are listening to a presentation?", options: [{ text: "Focus on the visuals like charts and graphs.", style: "Visual" }, { text: "Listen intently to the speaker's tone and words.", style: "Auditory" }, { text: "Take detailed notes.", style: "Reading/Writing" }, { text: "Fidget or move around to stay focused.", style: "Kinesthetic" }] },
+            { question: "How do you prefer to receive instructions for a new task?", options: [{ text: "Through a detailed visual guide or infographic.", style: "Visual" }, { text: "By listening to an audio recording or verbal explanation.", style: "Auditory" }, { text: "In a written manual or step-by-step instructions.", style: "Reading/Writing" }, { text: "By being shown how to do it and then trying it myself.", style: "Kinesthetic" }] }
+        ]; 
         const subjects = ["Physics", "Biology", "Chemistry"];
         const styleDescriptions = { "Visual": "You learn best by seeing. Charts, diagrams, videos, and colorful presentations are your best friends.", "Auditory": "You learn best by hearing. You retain information well from lectures, discussions, and by talking things through.", "Reading/Writing": "You learn best through words. You love to read, take detailed notes, and write things down to understand them.", "Kinesthetic": "You learn best by doing. You're a hands-on learner who thrives on experiments, activities, and physical engagement." };
         
-        let state = { currentQuestionIndex: 0, scores: { "Visual": 0, "Auditory": 0, "Reading/Writing": 0, "Kinesthetic": 0 }, userLearningStyle: '', userSelectedSubject: '', userTopic: '', generatedLessonText: '', originalLessonHtml: '', lessonQuizData: [], userQuizAnswers: [], activeScreen: 'welcome', };
+        let state = { 
+            currentQuestionIndex: 0, 
+            scores: { "Visual": 0, "Auditory": 0, "Reading/Writing": 0, "Kinesthetic": 0 }, 
+            userLearningStyle: '', 
+            userSelectedSubject: '', 
+            userTopic: '', 
+            generatedLessonText: '', 
+            originalLessonHtml: '', 
+            lessonQuizData: [], // Stores quiz questions generated by API
+            userQuizAnswers: [], // Stores selected option index for each question in lesson quiz
+            currentLessonQuizQuestionIndex: 0, 
+            activeScreen: 'welcome', 
+        };
 
         // --- Core Functions ---
         function showScreen(screenId) {
             Object.keys(screens).forEach(key => screens[key].classList.add('hidden'));
+            
             screens[screenId].classList.remove('hidden');
             state.activeScreen = screenId;
+
+            // Chatbox functionality removed, so no need to handle its visibility here
+
             // Use a short timeout to allow the DOM to update before calculating height
             setTimeout(() => {
                 if (screens[screenId] && typeof screens[screenId].offsetHeight !== 'undefined') {
@@ -179,7 +217,19 @@
         }
         
         function resetFlow() {
-            state = { currentQuestionIndex: 0, scores: { "Visual": 0, "Auditory": 0, "Reading/Writing": 0, "Kinesthetic": 0 }, userLearningStyle: '', userSelectedSubject: '', userTopic: '', generatedLessonText: '', originalLessonHtml: '', lessonQuizData: [], userQuizAnswers: [], activeScreen: 'welcome' };
+            state = { 
+                currentQuestionIndex: 0, 
+                scores: { "Visual": 0, "Auditory": 0, "Reading/Writing": 0, "Kinesthetic": 0 }, 
+                userLearningStyle: '', 
+                userSelectedSubject: '', 
+                userTopic: '', 
+                generatedLessonText: '', 
+                originalLessonHtml: '', 
+                lessonQuizData: [], 
+                userQuizAnswers: [], 
+                currentLessonQuizQuestionIndex: 0, 
+                activeScreen: 'welcome' 
+            };
             topicElements.input.value = '';
             topicElements.suggestionsContainer.innerHTML = '';
             feedbackContainer.innerHTML = '';
@@ -187,9 +237,26 @@
         }
 
         // --- Learning Style Quiz Flow ---
-        function startQuiz() { state.currentQuestionIndex = 0; state.scores = { "Visual": 0, "Auditory": 0, "Reading/Writing": 0, "Kinesthetic": 0 }; showScreen('quiz'); displayQuestion(); }
-        function displayQuestion() { if (state.currentQuestionIndex >= quizQuestions.length) { calculateResult(); return; } const question = quizQuestions[state.currentQuestionIndex]; quizContainer.questionText.textContent = question.question; quizContainer.optionsContainer.innerHTML = ''; question.options.forEach(option => { const button = document.createElement('button'); button.textContent = option.text; button.className = 'w-full text-left p-4 rounded-lg border border-slate-300 hover:bg-indigo-100 hover:border-indigo-400 transition-colors'; button.onclick = () => selectAnswer(option.style); quizContainer.optionsContainer.appendChild(button); }); quizContainer.questionCounter.textContent = `Question ${state.currentQuestionIndex + 1} of ${quizQuestions.length}`; quizContainer.progressBar.style.width = `${((state.currentQuestionIndex) / quizQuestions.length) * 100}%`; }
-        function selectAnswer(style) { state.scores[style]++; state.currentQuestionIndex++; displayQuestion(); }
+        function startQuiz() { state.currentQuestionIndex = 0; state.scores = { "Visual": 0, "Auditory": 0, "Reading/Writing": 0, "Kinesthetic": 0 }; showScreen('quiz'); displayLearningStyleQuestion(); }
+        function displayLearningStyleQuestion() { 
+            if (state.currentQuestionIndex >= learningStyleQuizQuestions.length) { 
+                calculateResult(); 
+                return; 
+            } 
+            const question = learningStyleQuizQuestions[state.currentQuestionIndex]; // Use learningStyleQuizQuestions
+            quizContainer.questionText.textContent = question.question; 
+            quizContainer.optionsContainer.innerHTML = ''; 
+            question.options.forEach(option => { 
+                const button = document.createElement('button'); 
+                button.textContent = option.text; 
+                button.className = 'w-full text-left p-4 rounded-lg border border-slate-300 hover:bg-indigo-100 hover:border-indigo-400 transition-colors'; 
+                button.onclick = () => selectAnswer(option.style); 
+                quizContainer.optionsContainer.appendChild(button); 
+            }); 
+            quizContainer.questionCounter.textContent = Question ${state.currentQuestionIndex + 1} of ${learningStyleQuizQuestions.length}; 
+            quizContainer.progressBar.style.width = ${((state.currentQuestionIndex) / learningStyleQuizQuestions.length) * 100}%; 
+        }
+        function selectAnswer(style) { state.scores[style]++; state.currentQuestionIndex++; displayLearningStyleQuestion(); } // Call displayLearningStyleQuestion
         function calculateResult() { state.userLearningStyle = Object.keys(state.scores).reduce((a, b) => state.scores[a] > state.scores[b] ? a : b); resultElements.styleResult.textContent = state.userLearningStyle; resultElements.styleDescription.textContent = styleDescriptions[state.userLearningStyle]; quizContainer.progressBar.style.width = '100%'; showScreen('result'); }
 
         // --- Subject & Topic Flow ---
@@ -199,7 +266,7 @@
         // --- Gemini API Call Function ---
         async function callGemini(prompt, schema = null) {
             const apiKey = "AIzaSyAv3PkQan3RpuSgwa3NY39xUyfHkuu60BM"; 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            const apiUrl = https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey};
             
             const payload = {
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
@@ -220,7 +287,7 @@
 
             if (!response.ok) {
                 const errorBody = await response.text();
-                throw new Error(`API request failed with status ${response.status}: ${errorBody}`);
+                throw new Error(API request failed with status ${response.status}: ${errorBody});
             }
             
             const result = await response.json();
@@ -233,7 +300,7 @@
             buttons.suggestTopics.textContent = 'Thinking...';
             topicElements.suggestionsContainer.innerHTML = '';
             
-            const prompt = `Suggest 4 interesting beginner-level topics for the subject: "${state.userSelectedSubject}".`;
+            const prompt = Suggest 4 interesting beginner-level topics for the subject: "${state.userSelectedSubject}".;
             const schema = { type: "ARRAY", items: { type: "STRING" } };
 
             try {
@@ -250,7 +317,7 @@
                 });
             } catch (error) {
                 console.error("Error suggesting topics:", error);
-                topicElements.suggestionsContainer.innerHTML = `<p class="text-red-500 text-sm">Could not get suggestions.</p>`;
+                topicElements.suggestionsContainer.innerHTML = <p class="text-red-500 text-sm">Could not get suggestions.</p>;
             } finally {
                 buttons.suggestTopics.disabled = false;
                 buttons.suggestTopics.innerHTML = '✨ Suggest Topics';
@@ -258,13 +325,49 @@
         }
 
         // --- Lesson Generation Flow ---
-        async function handleLessonGeneration() { state.userTopic = topicElements.input.value.trim(); if (!state.userTopic) { alert("Please enter a topic."); return; } loadingText.textContent = "Crafting your lesson..."; showScreen('loading'); const prompt = `Generate a lesson in HTML format for a student with a "${state.userLearningStyle}" learning style. The subject is "${state.userSelectedSubject}" and the specific topic is "${state.userTopic}". - For "Visual" style, include descriptions of diagrams, charts, or visual aids (use placeholders like "[Diagram of X]"). - For "Auditory" style, structure it like a script or a podcast transcript with clear explanations. - For "Reading/Writing" style, provide a well-structured text with clear headings, bullet points, and definitions. - For "Kinesthetic" style, suggest a simple, hands-on activity or experiment the user can do. Do not include <html>, <head>, or <body> tags. Just provide the content that can be placed inside a div.`; try { const generatedHtml = await callGemini(prompt); lessonContentContainer.innerHTML = generatedHtml; state.generatedLessonText = lessonContentContainer.innerText; state.originalLessonHtml = generatedHtml; buttons.eli5.classList.remove('hidden'); buttons.restoreLesson.classList.add('hidden'); showScreen('lesson'); } catch (error) { console.error("Error generating lesson:", error); lessonContentContainer.innerHTML = `<p class="text-red-500">Sorry, we couldn't generate the lesson. Please try again. Error: ${error.message}</p>`; showScreen('lesson'); } }
+        async function handleLessonGeneration() { 
+            state.userTopic = topicElements.input.value.trim(); 
+            if (!state.userTopic) { 
+                const messageBox = document.createElement('div');
+                messageBox.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
+                messageBox.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-xl text-center">
+                        <p class="text-lg mb-4">Please enter a topic.</p>
+                        <button onclick="this.parentNode.parentNode.remove()" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg">OK</button>
+                    </div>
+                `;
+                document.body.appendChild(messageBox);
+                return; 
+            } 
+            loadingText.textContent = "Crafting your lesson..."; 
+            showScreen('loading'); 
+            // The prompt now strictly enforces generating only one type of lesson.
+            const prompt = `Generate a comprehensive lesson in HTML format, perfectly tailored to a "${state.userLearningStyle}" learning style. The subject is "${state.userSelectedSubject}" and the specific topic is "${state.userTopic}". Ensure the lesson structure and content ONLY and STRICTLY align with this style. Do NOT include elements or suggestions for other learning styles.
+            - If the learning style is "Visual", prioritize vivid descriptions of diagrams, charts, and visual aids (use placeholders like "[Diagram of X showing Y]"). Use clear, concise language to describe what a visual learner would see. Emphasize layout that uses visual breaks and graphical elements, even if represented textually. Focus on imagery, colors, and spatial arrangements.
+            - If the learning style is "Auditory", structure the lesson as if it's a script for a podcast or a verbal explanation. Use a conversational tone, clear transitions, and suggestions for listening activities or discussions. Encourage reading aloud or discussing the material. Focus on sounds, rhythm, and spoken words.
+            - If the learning style is "Reading/Writing", provide a highly structured text with explicit headings, subheadings, bullet points, numbered lists, definitions of key terms, summary sections, and opportunities for note-taking. Emphasize reading comprehension and written exercises like summaries or essays. Focus on textual information, clarity, and organization.
+            - If the learning style is "Kinesthetic", include detailed descriptions of simple, hands-on activities, experiments, or interactive exercises the user can perform to understand the concepts. Focus on practical application, movement, and active engagement with the material.
+            Do not include <html>, <head>, or <body> tags. Just provide the content that can be placed inside a div.`; 
+            try { 
+                const generatedHtml = await callGemini(prompt); 
+                lessonContentContainer.innerHTML = generatedHtml; 
+                state.generatedLessonText = lessonContentContainer.innerText; 
+                state.originalLessonHtml = generatedHtml; 
+                buttons.eli5.classList.remove('hidden'); 
+                buttons.restoreLesson.classList.add('hidden'); 
+                showScreen('lesson'); 
+            } catch (error) { 
+                console.error("Error generating lesson:", error); 
+                lessonContentContainer.innerHTML = <p class="text-red-500">Sorry, we couldn't generate the lesson. Please try again. Error: ${error.message}</p>; 
+                showScreen('lesson'); 
+            } 
+        }
 
         // --- New Feature: ELI5 & Restore ---
         async function handleEli5() {
             loadingText.textContent = "Simplifying things...";
             showScreen('loading');
-            const prompt = `Explain the following text in a very simple way, like you're talking to a 5-year-old. Keep the original HTML structure (headings, lists, etc.) but simplify the words. Text: ${state.originalLessonHtml}`;
+            const prompt = Explain the following text in a very simple way, like you're talking to a 5-year-old. Keep the original HTML structure (headings, lists, etc.) but simplify the words. Text: ${state.originalLessonHtml};
             try {
                 const simplifiedHtml = await callGemini(prompt);
                 lessonContentContainer.innerHTML = simplifiedHtml;
@@ -273,7 +376,15 @@
                 buttons.restoreLesson.classList.remove('hidden');
             } catch (error) {
                 console.error("Error simplifying lesson:", error);
-                alert("Sorry, we couldn't simplify the lesson right now.");
+                const messageBox = document.createElement('div');
+                messageBox.className = 'fixed inset-0 bg-gray-600 bg-opacity50 flex items-center justify-center z-50';
+                messageBox.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-xl text-center">
+                        <p class="text-lg mb-4">Sorry, we couldn't simplify the lesson right now.</p>
+                        <button onclick="this.parentNode.parentNode.remove()" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg">OK</button>
+                    </div>
+                `;
+                document.body.appendChild(messageBox);
             } finally {
                 showScreen('lesson');
             }
@@ -286,12 +397,137 @@
             buttons.restoreLesson.classList.add('hidden');
         }
 
-        // --- Quiz Generation & Submission Flow ---
-        async function handleQuizGeneration() { loadingText.textContent = "Preparing your quiz..."; showScreen('loading'); const prompt = `Based on the following text, generate a multiple-choice quiz with 5 questions.\n---\n${state.generatedLessonText}\n---\n`; const schema = { type: "ARRAY", items: { type: "OBJECT", properties: { question: { type: "STRING" }, options: { type: "ARRAY", items: { type: "STRING" } }, correctAnswerIndex: { type: "INTEGER" } }, required: ["question", "options", "correctAnswerIndex"] } }; try { const quizJsonText = await callGemini(prompt, schema); state.lessonQuizData = JSON.parse(quizJsonText); displayLessonQuiz(); } catch (error) { console.error("Error generating quiz:", error); showScreen('lesson'); alert(`Sorry, we couldn't generate the quiz. Error: ${error.message}`); } }
-        function displayLessonQuiz() { lessonQuizForm.innerHTML = ''; state.lessonQuizData.forEach((q, index) => { const questionBlock = document.createElement('div'); questionBlock.className = 'border-t border-slate-200 pt-4'; const questionText = document.createElement('p'); questionText.className = 'font-semibold mb-3'; questionText.textContent = `${index + 1}. ${q.question}`; questionBlock.appendChild(questionText); const optionsList = document.createElement('div'); optionsList.className = 'space-y-2'; q.options.forEach((option, optionIndex) => { const label = document.createElement('label'); label.className = 'flex items-center p-3 border rounded-lg hover:bg-slate-100 cursor-pointer'; const radio = document.createElement('input'); radio.type = 'radio'; radio.name = `question-${index}`; radio.value = optionIndex; radio.className = 'h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300'; const optionText = document.createElement('span'); optionText.className = 'ml-3'; optionText.textContent = option; label.appendChild(radio); label.appendChild(optionText); optionsList.appendChild(label); }); questionBlock.appendChild(optionsList); lessonQuizForm.appendChild(questionBlock); }); showScreen('lessonQuiz'); }
-        function handleSubmitLessonQuiz() { let score = 0; state.userQuizAnswers = []; state.lessonQuizData.forEach((q, index) => { const selectedOption = lessonQuizForm.querySelector(`input[name="question-${index}"]:checked`); const answerIndex = selectedOption ? parseInt(selectedOption.value) : -1; state.userQuizAnswers.push(answerIndex); if (answerIndex === q.correctAnswerIndex) { score++; } }); const totalQuestions = state.lessonQuizData.length; finalScoreText.textContent = `${score} / ${totalQuestions}`; feedbackContainer.innerHTML = ''; document.getElementById('get-feedback-btn').style.display = score < totalQuestions ? 'block' : 'none'; showScreen('score'); }
+        // --- Quiz Generation & Full Quiz Display ---
+        async function handleQuizGeneration() { 
+            loadingText.textContent = "Preparing your quiz..."; 
+            showScreen('loading'); 
+            // Explicitly ask for 10 questions
+            const prompt = Based on the following text, generate a multiple-choice quiz with 10 questions.\n---\n${state.generatedLessonText}\n---\nEach question should have 4 options and specify the correct answer index (0-3). Provide the response in JSON format.; 
+            const schema = { 
+                type: "ARRAY", 
+                items: { 
+                    type: "OBJECT", 
+                    properties: { 
+                        question: { type: "STRING" }, 
+                        options: { type: "ARRAY", items: { type: "STRING" } }, 
+                        correctAnswerIndex: { type: "INTEGER" } 
+                    }, 
+                    required: ["question", "options", "correctAnswerIndex"] 
+                } 
+            }; 
+            try { 
+                const quizJsonText = await callGemini(prompt, schema); 
+                state.lessonQuizData = JSON.parse(quizJsonText); 
+                state.userQuizAnswers = new Array(state.lessonQuizData.length).fill(-1); // Initialize answers for all questions
+                
+                displayFullQuiz(); // Display all questions at once
+                showScreen('lessonQuiz'); 
+            } catch (error) { 
+                console.error("Error generating quiz:", error); 
+                showScreen('lesson'); 
+                const messageBox = document.createElement('div');
+                messageBox.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
+                messageBox.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-xl text-center">
+                        <p class="text-lg mb-4">Sorry, we couldn't generate the quiz. Error: ${error.message}</p>
+                        <button onclick="this.parentNode.parentNode.remove()" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg">OK</button>
+                    </div>
+                `;
+                document.body.appendChild(messageBox);
+            } 
+        }
 
-        // --- New Feature: Quiz Feedback ---
+        // Display all quiz questions for "Test Your Knowledge"
+        function displayFullQuiz() { 
+            // Use lessonQuizForm which is directly inside the lesson-quiz-screen
+            lessonQuizForm.innerHTML = ''; 
+            state.lessonQuizData.forEach((q, index) => { 
+                const questionBlock = document.createElement('div'); 
+                questionBlock.className = 'border-t border-slate-200 pt-4'; 
+                const questionText = document.createElement('p'); 
+                questionText.className = 'font-semibold mb-3 text-lg'; 
+                questionText.textContent = ${index + 1}. ${q.question}; 
+                questionBlock.appendChild(questionText); 
+                const optionsList = document.createElement('div'); 
+                optionsList.className = 'space-y-2'; 
+                q.options.forEach((option, optionIndex) => { 
+                    const label = document.createElement('label'); 
+                    label.className = 'flex items-center p-3 border rounded-lg hover:bg-slate-100 cursor-pointer'; 
+                    const radio = document.createElement('input'); 
+                    radio.type = 'radio'; 
+                    radio.name = question-${index}; 
+                    radio.value = optionIndex; 
+                    radio.className = 'h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300'; 
+                    // Pre-select if an answer was previously chosen
+                    if (state.userQuizAnswers[index] === optionIndex) {
+                        radio.checked = true;
+                    }
+                    // Store the selected answer in state.userQuizAnswers when an option is chosen
+                    radio.onchange = () => {
+                        state.userQuizAnswers[index] = parseInt(radio.value);
+                    };
+
+                    const optionText = document.createElement('span'); 
+                    optionText.className = 'ml-3'; 
+                    optionText.textContent = option; 
+                    label.appendChild(radio); 
+                    label.appendChild(optionText); 
+                    optionsList.appendChild(label); 
+                }); 
+                questionBlock.appendChild(optionsList); 
+                lessonQuizForm.appendChild(questionBlock); 
+            }); 
+            // The "Submit Answers" button is already in the HTML after the form and will be visible
+        }
+
+        async function handleSubmitLessonQuiz() { 
+            let score = 0;
+            const incorrectAnswers = [];
+
+            // Check if all questions are answered
+            const allAnswered = state.userQuizAnswers.every(answer => answer !== -1);
+            if (!allAnswered) {
+                const messageBox = document.createElement('div');
+                messageBox.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
+                messageBox.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-xl text-center">
+                        <p class="text-lg mb-4">Please answer all questions before submitting the quiz.</p>
+                        <button onclick="this.parentNode.parentNode.remove()" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg">OK</button>
+                    </div>
+                `;
+                document.body.appendChild(messageBox);
+                return;
+            }
+
+            state.lessonQuizData.forEach((q, index) => {
+                const userAnswerIndex = state.userQuizAnswers[index];
+                if (userAnswerIndex === q.correctAnswerIndex) {
+                    score++;
+                } else {
+                    incorrectAnswers.push({
+                        question: q.question,
+                        userAnswer: userAnswerIndex === -1 ? "No answer" : q.options[userAnswerIndex],
+                        correctAnswer: q.options[q.correctAnswerIndex]
+                    });
+                }
+            });
+
+            const totalQuestions = state.lessonQuizData.length;
+            finalScoreText.textContent = ${score} / ${totalQuestions};
+            
+            feedbackContainer.innerHTML = ''; // Clear previous feedback
+
+            if (incorrectAnswers.length > 0) {
+                buttons.getFeedback.classList.remove('hidden');
+                buttons.getFeedback.disabled = false; // Enable feedback button
+            } else {
+                buttons.getFeedback.classList.add('hidden');
+                feedbackContainer.innerHTML = '<p class="text-green-600 font-semibold">Fantastic job! You answered all questions correctly!</p>';
+            }
+            showScreen('score'); 
+        }
+
+        // --- Quiz Feedback (Overall) ---
         async function handleGetFeedback() {
             const incorrectAnswers = [];
             state.lessonQuizData.forEach((q, index) => {
@@ -299,33 +535,35 @@
                     incorrectAnswers.push({
                         question: q.question,
                         userAnswer: state.userQuizAnswers[index] === -1 ? "No answer" : q.options[state.userQuizAnswers[index]],
-                        correctAnswer: q.options[q.correctAnswerIndex]
+                        correctAnswer: q.options[q.correctAnswerIndex],
                     });
                 }
             });
 
             if (incorrectAnswers.length === 0) {
-                feedbackContainer.innerHTML = `<p class="text-green-600">Great job, no incorrect answers to review!</p>`;
+                feedbackContainer.innerHTML = <p class="text-green-600">Great job, no incorrect answers to review!</p>;
                 return;
             }
 
             buttons.getFeedback.disabled = true;
             buttons.getFeedback.textContent = 'Analyzing...';
-            const prompt = `A user took a quiz and got some questions wrong. For each incorrect answer, provide a brief, encouraging explanation (1-2 sentences) about why their answer was incorrect and why the correct answer is right. Structure the response as simple HTML with a <h2> for each question. Here are the incorrect answers:\n\n${JSON.stringify(incorrectAnswers, null, 2)}`;
+            // Adjusted prompt to directly request explanations for incorrect answers
+            const prompt = A user took a quiz and got some questions wrong. For each incorrect answer, provide a brief, encouraging explanation (1-2 sentences) about why their answer was incorrect and why the correct answer is right. Structure the response as simple HTML with a <h2> for each question, and clearly state the correct answer. Here are the incorrect answers:\n\n${JSON.stringify(incorrectAnswers, null, 2)};
             
             try {
                 const feedbackHtml = await callGemini(prompt);
                 feedbackContainer.innerHTML = feedbackHtml;
             } catch (error) {
                 console.error("Error getting feedback:", error);
-                feedbackContainer.innerHTML = `<p class="text-red-500">Sorry, couldn't get feedback at this time.</p>`;
+                feedbackContainer.innerHTML = <p class="text-red-500">Sorry, couldn't get feedback at this time.</p>;
             } finally {
                  buttons.getFeedback.style.display = 'none';
             }
         }
 
+       
         // --- Event Listeners ---
-        Object.values(buttons).forEach(button => button.addEventListener('click', (e) => {
+        mainContainer.addEventListener('click', (e) => {
             switch(e.target.id) {
                 case 'start-quiz-btn': startQuiz(); break;
                 case 'proceed-to-subjects-btn': populateSubjects(); break;
@@ -334,13 +572,13 @@
                 case 'start-lesson-quiz-btn': handleQuizGeneration(); break;
                 case 'eli5-btn': handleEli5(); break;
                 case 'restore-lesson-btn': handleRestoreLesson(); break;
-                case 'submit-lesson-quiz-btn': handleSubmitLessonQuiz(); break;
+                case 'submit-lesson-quiz-btn': handleSubmitLessonQuiz(); break; 
                 case 'get-feedback-btn': handleGetFeedback(); break;
                 case 'start-over-btn': resetFlow(); break;
             }
-        }));
+        });
+
         
-        // --- Initial Call ---
         window.onload = () => showScreen('welcome');
     </script>
 </body>
